@@ -69,7 +69,7 @@ struct ItemDetailView: View {
                         
                         // Delete Button
                         Button(action: { viewModel.send(intent: .deleteItem) }) {
-                            Text("아이템 삭제")
+                            Text("옷 삭제")
                                 .font(.system(size: 14))
                                 .foregroundColor(.red)
                                 .frame(maxWidth: .infinity)

@@ -79,16 +79,22 @@ final class FashionAIProcessor {
     private func mapIdentifierToKorean(_ id: String) -> String {
         let lowerID = id.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // [초강력 매핑] 모델 결과에 조금이라도 하의 관련 단어가 있으면 무조건 "하의" 반환
+        // 1. 하의 관련 키워드
         let bottomSigns = ["pants", "jeans", "denim", "trousers", "skirt", "short", "legging", "chino", "jogger", "sweatpants", "slacks", "briefs", "jean", "bottom"]
         if bottomSigns.contains(where: { lowerID.contains($0) }) {
             return "하의"
         }
         
-        // 상의 관련 단어
+        // 2. 상의 관련 키워드
         let topSigns = ["shirt", "top", "sweatshirt", "hoodie", "jacket", "coat", "sweater", "cardigan", "blouse", "tee", "t-shirt", "vest", "outerwear", "jersey", "pullover"]
         if topSigns.contains(where: { lowerID.contains($0) }) {
             return "상의"
+        }
+        
+        // 3. [복구 및 강화] 신발 관련 키워드
+        let shoeSigns = ["shoe", "sneaker", "boot", "sandal", "slipper", "footwear", "clog", "heel", "loafer"]
+        if shoeSigns.contains(where: { lowerID.contains($0) }) {
+            return "신발"
         }
         
         return "의류"

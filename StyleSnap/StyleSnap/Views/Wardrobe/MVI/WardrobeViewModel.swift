@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import SwiftUI
 import RealmSwift
+import Realm // NotificationToken.invalidate()를 위해 필수
 
 // MARK: - MVI Components
 enum WardrobeIntent {
@@ -25,12 +26,18 @@ struct WardrobeState {
 final class WardrobeViewModel: ObservableObject {
     @Published private(set) var state = WardrobeState()
     
-    private let repository: WardrobeRepositoryProtocol
+    // 리포지토리 및 엔진 직접 참조하여 빌드 안정성 확보
+    private let repository: WardrobeRepositoryProtocol = WardrobeRepository()
     private let outfitEngine = OutfitEngine.shared
-    private var cancellables = Set<AnyCancellable>()
+    private var notificationToken: NotificationToken?
     
-    init(repository: WardrobeRepositoryProtocol = WardrobeRepository()) {
-        self.repository = repository
+    init() {
+        setupObservation()
+    }
+    
+    deinit {
+        // 백그라운드 스레드에서 토큰을 무효화할 수 있도록 안전하게 처리
+        notificationToken?.invalidate()
     }
     
     func send(intent: WardrobeIntent) {
@@ -41,19 +48,36 @@ final class WardrobeViewModel: ObservableObject {
             state.selectedCategory = category
             fetchClothes()
         case .deleteClothing(let item):
-            // 실제 삭제 로직 (생략 가능하나 구조상 포함)
             print("DEBUG: Delete item intent received for \(item.name)")
         case .generateOutfit:
             Task { await handleGenerateOutfit() }
         }
     }
     
+    private func setupObservation() {
+        do {
+            let realm = try Realm()
+            let results = realm.objects(ClothingObject.self)
+            
+            notificationToken = results.observe { [weak self] changes in
+                guard let self = self else { return }
+                Task { @MainActor in
+                    self.fetchClothes()
+                }
+            }
+        } catch {
+            print("DEBUG: Failed to setup observation: \(error)")
+        }
+    }
+    
     private func fetchClothes() {
         state.isLoading = true
-        // 리포지토리에서 데이터를 가져와 구조체로 변환
+        
+        // 리포지토리에서 데이터를 가져와 구조체로 변환 및 필터링
+        // Realm 객체 직접 필터링보다 안전한 도메인 모델(ClothingItem) 변환 후 필터링 수행
         let results = repository.fetchAll()
-            .filter { $0.category == state.selectedCategory }
             .map { $0.toDomain() }
+            .filter { $0.category == state.selectedCategory }
         
         state.clothes = results
         state.isLoading = false

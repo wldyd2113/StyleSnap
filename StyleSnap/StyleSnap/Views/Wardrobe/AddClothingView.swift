@@ -69,11 +69,11 @@ struct AddClothingView: View {
                 }
                 
                 Section(header: Text("상세 정보")) {
-                    TextField("아이템 이름", text: Binding(
+                    TextField("옷 종류", text: Binding(
                         get: { viewModel.state.itemName },
                         set: { viewModel.send(intent: .updateName($0)) }
                     ))
-                    TextField("색상 명칭", text: Binding(
+                    TextField("색상", text: Binding(
                         get: { viewModel.state.colorName },
                         set: { viewModel.send(intent: .updateColorName($0)) }
                     ))
