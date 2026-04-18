@@ -1,0 +1,9 @@
+**/coreml/
+**/ai-env/
+.DS_Store
+**/*.mlpackage/
+**/*.mlmodel
+build/
+DerivedData/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
