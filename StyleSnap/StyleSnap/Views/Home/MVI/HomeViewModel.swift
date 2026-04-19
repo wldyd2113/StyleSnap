@@ -53,14 +53,16 @@ final class HomeViewModel: ObservableObject {
     }
     
     private func handleFetchHomeData(category: String) -> AnyPublisher<HomeState, Never> {
+        // [핵심 수정] 로딩 시작 시점에 선택된 카테고리를 즉시 반영하여 UI 업데이트 보장
         var loadingState = self.state
+        loadingState.selectedCategory = category
         loadingState.isLoading = true
         
         let query = category == "전체" ? "2024 봄 코디" : "2024 \(category) 코디"
         
         return repository.searchFashionItems(query: query, display: 20)
             .map { result -> HomeState in
-                var newState = self.state
+                var newState = loadingState // 변경된 카테고리가 포함된 loadingState 기반으로 생성
                 newState.isLoading = false
                 switch result {
                 case .success(let items):

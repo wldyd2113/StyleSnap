@@ -30,7 +30,8 @@ struct ShoppingItemDTO: Codable {
             price: Int(lprice) ?? 0,
             imageURL: image,
             mallName: mallName,
-            category: category1
+            category: category1,
+            shopLink: link // [추가] 구매 링크 연결
         )
     }
 }
@@ -44,4 +45,5 @@ struct FashionItem: Identifiable, Equatable {
     let imageURL: String
     let mallName: String
     let category: String
+    let shopLink: String // [추가] 구매 링크
 }

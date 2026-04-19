@@ -14,7 +14,6 @@ struct HomeView: View {
                             ForEach(categories, id: \.self) { category in
                                 StyleTag(text: category, isSelected: viewModel.state.selectedCategory == category)
                                     .onTapGesture {
-                                        viewModel.send(intent: .selectCategory(category))
                                         viewModel.send(intent: .fetchHomeData(category: category))
                                         print("DEBUG: Category selected: \(category)")
                                     }
@@ -24,12 +23,9 @@ struct HomeView: View {
                     }
                     
                     if viewModel.state.isLoading {
-                        ProgressView()
-                            .padding(.top, 40)
+                        ProgressView().padding(.top, 40)
                     } else if let error = viewModel.state.errorMessage {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .padding()
+                        Text(error).foregroundColor(.red).padding()
                     } else {
                         // Seasonal Recommendations
                         VStack(spacing: 16) {
@@ -38,12 +34,16 @@ struct HomeView: View {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 16) {
                                     ForEach(viewModel.state.recommendations) { item in
-                                        FashionCard(
-                                            title: item.name,
-                                            subtitle: item.brand,
-                                            imageURL: item.imageURL
-                                        )
-                                        .frame(width: 160)
+                                        // [수정] NavigationLink로 상세 화면 연결
+                                        NavigationLink(destination: HomeItemDetailView(item: item)) {
+                                            FashionCard(
+                                                title: item.name,
+                                                subtitle: item.brand,
+                                                imageURL: item.imageURL
+                                            )
+                                            .frame(width: 160)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
                                 .padding(.horizontal)
@@ -56,11 +56,15 @@ struct HomeView: View {
                             
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
                                 ForEach(viewModel.state.trendingStyles) { item in
-                                    FashionCard(
-                                        title: item.name,
-                                        subtitle: "\(item.price)원",
-                                        imageURL: item.imageURL
-                                    )
+                                    // [수정] NavigationLink로 상세 화면 연결
+                                    NavigationLink(destination: HomeItemDetailView(item: item)) {
+                                        FashionCard(
+                                            title: item.name,
+                                            subtitle: "\(item.price)원",
+                                            imageURL: item.imageURL
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal)
@@ -71,6 +75,7 @@ struct HomeView: View {
             }
             .navigationTitle("StyleSnap")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.visible, for: .tabBar) // 상세화면에서 돌아왔을 때 탭바가 보이도록 설정
             .onAppear {
                 viewModel.send(intent: .fetchHomeData(category: viewModel.state.selectedCategory))
             }
