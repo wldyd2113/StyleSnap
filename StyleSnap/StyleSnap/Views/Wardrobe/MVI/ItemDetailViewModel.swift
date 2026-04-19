@@ -22,8 +22,8 @@ struct ItemDetailState {
 final class ItemDetailViewModel: ObservableObject {
     @Published private(set) var state = ItemDetailState()
     
-    // 리포지토리 직접 참조 (의존성 인식 에러 방지)
-    private let repository: WardrobeRepositoryProtocol = WardrobeRepository()
+    // 리포지토리 직접 참조 (싱글톤 인스턴스 사용)
+    private let repository: WardrobeRepositoryProtocol = WardrobeRepository.shared
     
     init() {}
     

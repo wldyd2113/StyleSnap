@@ -44,7 +44,7 @@ struct ItemDetailView: View {
                         
                         // AI Matching Suggestions (내 옷장 연동)
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("이 옷과 매칭하기 좋은 내 옷장 아이템")
+                            Text("이 옷과 매칭하기 좋은 내 옷장 옷")
                                 .font(.system(size: 18, weight: .bold))
                             
                             if viewModel.state.matchingRecommendations.isEmpty {

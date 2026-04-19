@@ -80,8 +80,14 @@ struct WardrobeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddView = true }) {
-                        Image(systemName: "plus").foregroundColor(.black)
+                    HStack(spacing: 16) {
+                        NavigationLink(destination: OOTDCalendarView()) {
+                            Image(systemName: "calendar.badge.plus").foregroundColor(.black)
+                        }
+                        
+                        Button(action: { showingAddView = true }) {
+                            Image(systemName: "plus").foregroundColor(.black)
+                        }
                     }
                 }
             }

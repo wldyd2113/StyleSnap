@@ -35,7 +35,7 @@ final class AddClothingViewModel: ObservableObject {
     private let aiProcessor = FashionAIProcessor.shared
     private let colorExtractor = ColorExtractor.shared
     
-    init(repository: WardrobeRepositoryProtocol = WardrobeRepository()) {
+    init(repository: WardrobeRepositoryProtocol = WardrobeRepository.shared) {
         self.repository = repository
     }
     

@@ -27,7 +27,7 @@ final class WardrobeViewModel: ObservableObject {
     @Published private(set) var state = WardrobeState()
     
     // 리포지토리 및 엔진 직접 참조하여 빌드 안정성 확보
-    private let repository: WardrobeRepositoryProtocol = WardrobeRepository()
+    private let repository: WardrobeRepositoryProtocol = WardrobeRepository.shared
     private let outfitEngine = OutfitEngine.shared
     private var notificationToken: NotificationToken?
     

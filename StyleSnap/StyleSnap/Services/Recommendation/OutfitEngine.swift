@@ -14,7 +14,7 @@ struct OutfitSet: Identifiable {
 
 final class OutfitEngine {
     static let shared = OutfitEngine()
-    private let repository: WardrobeRepositoryProtocol = WardrobeRepository()
+    private let repository: WardrobeRepositoryProtocol = WardrobeRepository.shared
     
     private init() {}
     

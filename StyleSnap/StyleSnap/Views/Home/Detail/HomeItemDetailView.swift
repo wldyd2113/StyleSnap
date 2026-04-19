@@ -171,7 +171,7 @@ struct RoundedCorner: Shape {
 struct HomeItemDetailView_Previews: PreviewProvider {
     static var previews: some View {
         HomeItemDetailView(item: FashionItem(
-            id: "1", name: "샘플 프리미엄 패션 아이템", brand: "STYLE SNAP", 
+            id: "1", name: "샘플 프리미엄 패션 옷", brand: "STYLE SNAP", 
             price: 128000, imageURL: "", mallName: "공식 스토어", 
             category: "상의", shopLink: ""
         ))
