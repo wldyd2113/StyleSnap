@@ -15,7 +15,7 @@ enum WardrobeIntent {
 struct WardrobeState {
     var isLoading: Bool = false
     var clothes: [ClothingItem] = []
-    var selectedCategory: String = "상의"
+    var selectedCategory: String = "전체" // 기본값을 '전체'로 변경하여 초기 발견성 강화
     var recommendedOutfit: OutfitSet? = nil
     var isShowingRecommendation: Bool = false
     var errorMessage: String? = nil
@@ -73,14 +73,21 @@ final class WardrobeViewModel: ObservableObject {
     private func fetchClothes() {
         state.isLoading = true
         
-        // 리포지토리에서 데이터를 가져와 구조체로 변환 및 필터링
-        // Realm 객체 직접 필터링보다 안전한 도메인 모델(ClothingItem) 변환 후 필터링 수행
-        let results = repository.fetchAll()
-            .map { $0.toDomain() }
-            .filter { $0.category == state.selectedCategory }
+        let allItems = repository.fetchAll().map { $0.toDomain() }
         
-        state.clothes = results
+        // 디버깅 로그 강화
+        print("DEBUG: fetchClothes - total items in DB: \(allItems.count)")
+        
+        let filtered: [ClothingItem]
+        if state.selectedCategory == "전체" {
+            filtered = allItems
+        } else {
+            filtered = allItems.filter { $0.category == state.selectedCategory }
+        }
+        
+        state.clothes = filtered
         state.isLoading = false
+        print("DEBUG: fetchClothes - final result: \(filtered.count) for category: \(state.selectedCategory)")
     }
     
     private func handleGenerateOutfit() async {

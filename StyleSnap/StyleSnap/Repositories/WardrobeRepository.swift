@@ -4,18 +4,26 @@ import RealmSwift
 protocol WardrobeRepositoryProtocol {
     func addClothing(_ clothing: ClothingObject)
     func fetchAll() -> [ClothingObject]
-    func getAllItems() -> [ClothingItem] // 도메인 모델로 변환하여 반환하는 메서드 추가
+    func getAllItems() -> [ClothingItem]
     func deleteClothing(_ clothing: ClothingObject)
 }
 
 final class WardrobeRepository: WardrobeRepositoryProtocol {
-    static let shared = WardrobeRepository() // 싱글톤 추가
+    static let shared = WardrobeRepository()
     
     private var realm: Realm {
-        try! Realm()
+        return try! Realm()
     }
     
-    private init() {} // 싱글톤 패턴을 위해 private init
+    private init() {
+        // [수정] 앱 전체에서 동일한 설정을 사용하도록 기본 설정을 업데이트
+        let config = Realm.Configuration(
+            schemaVersion: 2,
+            deleteRealmIfMigrationNeeded: true
+        )
+        Realm.Configuration.defaultConfiguration = config
+        print("DEBUG: WardrobeRepository initialized with schema version 2")
+    }
     
     func addClothing(_ clothing: ClothingObject) {
         let r = self.realm
@@ -28,7 +36,6 @@ final class WardrobeRepository: WardrobeRepositoryProtocol {
         return Array(realm.objects(ClothingObject.self).sorted(byKeyPath: "createdAt", ascending: false))
     }
     
-    // 도메인 모델(ClothingItem)로 변환하여 반환
     func getAllItems() -> [ClothingItem] {
         return fetchAll().map { $0.toDomain() }
     }

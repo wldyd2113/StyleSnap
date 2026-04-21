@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selectedTab: Int = 0
+    @EnvironmentObject var tabManager: TabManager
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $tabManager.selectedTab) {
             HomeView()
                 .tabItem {
                     Image(systemName: "house")
@@ -19,16 +19,23 @@ struct MainTabView: View {
                 }
                 .tag(1)
             
+            AROOTDView()
+                .tabItem {
+                    Image(systemName: "arkit")
+                    Text("AR 룩")
+                }
+                .tag(2)
+            
             WardrobeView()
                 .tabItem {
                     Image(systemName: "hanger")
                     Text("옷장")
                 }
-                .tag(2)
+                .tag(3)
         }
         .accentColor(.black)
         .onAppear {
-            print("DEBUG: MainTabView appeared with 3-tab layout")
+            print("DEBUG: MainTabView restored with 4-tab layout (Canvas removed)")
         }
     }
 }

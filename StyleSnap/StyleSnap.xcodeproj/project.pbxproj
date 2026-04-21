@@ -10,7 +10,22 @@
 		3B23B8162F923496000CBFD4 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 3B23B8152F923496000CBFD4 /* Kingfisher */; };
 		3B23BBEB2F925FA4000CBFD4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 3B23BBEA2F925FA4000CBFD4 /* Alamofire */; };
 		3B544C812F937BFF008067E9 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 3B544C802F937BFF008067E9 /* RealmSwift */; };
+		3B544E562F954D88008067E9 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 3B544C802F937BFF008067E9 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3B544E572F954D88008067E9 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				3B544E562F954D88008067E9 /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		3B23B8062F92334E000CBFD4 /* StyleSnap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StyleSnap.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -64,6 +79,7 @@
 				3B23B8022F92334E000CBFD4 /* Sources */,
 				3B23B8032F92334E000CBFD4 /* Frameworks */,
 				3B23B8042F92334E000CBFD4 /* Resources */,
+				3B544E572F954D88008067E9 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

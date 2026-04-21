@@ -1,7 +1,6 @@
 import Foundation
 import SwiftUI
 
-// UI와 추천 엔진에서 사용할 스레드 안전한 구조체
 struct ClothingItem: Identifiable {
     let id: String
     let name: String
@@ -10,7 +9,8 @@ struct ClothingItem: Identifiable {
     let colorName: String
     let hexColor: String
     let imageData: Data?
-    
+    let embedding: [Float]? // [추가] AI가 분석한 패션 특징 벡터 (512차원)
+
     var color: Color {
         Color(hex: hexColor) ?? .blue
     }

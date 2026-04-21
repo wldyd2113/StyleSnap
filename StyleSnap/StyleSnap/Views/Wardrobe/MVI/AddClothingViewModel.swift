@@ -24,6 +24,7 @@ struct AddClothingState {
     var selectedColor: Color = .blue
     var isAnalyzing: Bool = false
     var isSaved: Bool = false
+    var currentEmbedding: [Float]? = nil // [추가] 분석된 임베딩 임시 보관
 }
 
 // MARK: - ViewModel
@@ -74,10 +75,12 @@ final class AddClothingViewModel: ObservableObject {
                         state.selectedColor = Color(uiColor: color)
                     }
                     
-                    // 2. AI 분석 (DeepLabV3 + EffNetV2 + CLIP)
+                    // 2. AI 분석 (카테고리 + 스타일 + 임베딩 특징 추출)
                     if let result = await aiProcessor.analyze(pixelBuffer: buffer) {
                         state.selectedCategory = result.category
                         state.selectedStyle = result.style
+                        state.currentEmbedding = result.embedding // [추가] 특징 벡터 저장
+                        
                         if state.itemName.isEmpty {
                             state.itemName = "\(result.style) \(result.category)"
                         }
@@ -96,6 +99,11 @@ final class AddClothingViewModel: ObservableObject {
         newClothing.colorName = state.colorName
         newClothing.hexColor = state.selectedColor.toHexStr()
         newClothing.imageData = state.capturedImageData
+        
+        // [추가] 특징 벡터(임베딩)를 데이터 형태로 변환하여 Realm에 저장
+        if let embedding = state.currentEmbedding {
+            newClothing.embeddingData = Data(bytes: embedding, count: embedding.count * MemoryLayout<Float>.size)
+        }
         
         repository.addClothing(newClothing)
         state.isSaved = true

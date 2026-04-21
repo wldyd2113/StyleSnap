@@ -1,20 +1,27 @@
 import Foundation
 import RealmSwift
-import Realm
-import SwiftUI
+import Realm // [추가] ObjectId.stringValue 사용을 위해 필요
 
-class ClothingObject: Object, ObjectKeyIdentifiable {
+class ClothingObject: Object {
     @Persisted(primaryKey: true) var id: ObjectId
     @Persisted var name: String = ""
     @Persisted var category: String = ""
     @Persisted var style: String = ""
     @Persisted var colorName: String = ""
-    @Persisted var hexColor: String = "" // Color를 저장하기 위한 헥사코드
-    @Persisted var imageData: Data? 
+    @Persisted var hexColor: String = ""
+    @Persisted var imageData: Data? = nil
     @Persisted var createdAt: Date = Date()
-    
-    // 구조체 변환 메서드 (스레드 안전한 데이터 전달을 위함)
+    @Persisted var embeddingData: Data? = nil // [추가] 벡터 데이터를 Data 형태로 압축 저장
+
     func toDomain() -> ClothingItem {
+        var embedding: [Float]? = nil
+        if let data = embeddingData {
+            // Data를 [Float] 배열로 복원
+            embedding = data.withUnsafeBytes { pointer in
+                Array(pointer.bindMemory(to: Float.self))
+            }
+        }
+        
         return ClothingItem(
             id: id.stringValue,
             name: name,
@@ -22,12 +29,8 @@ class ClothingObject: Object, ObjectKeyIdentifiable {
             style: style,
             colorName: colorName,
             hexColor: hexColor,
-            imageData: imageData
+            imageData: imageData,
+            embedding: embedding
         )
     }
-    
-    var color: Color {
-        Color(hex: hexColor) ?? .blue
-    }
 }
-// 중복된 Color extension 제거됨 (Utils/ColorExtensions.swift로 이동)
