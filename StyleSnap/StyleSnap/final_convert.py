@@ -43,8 +43,8 @@ example_top = torch.rand(1, 512)
 example_bottom = torch.rand(1, 512)
 traced_model = torch.jit.trace(model, (example_top, example_bottom))
 
-# 5. CoreML 변환
-print("Converting to CoreML... please wait.")
+# 5. CoreML 변환 (양자화 적용: Float16)
+print("Converting to CoreML with Float16 quantization... please wait.")
 try:
     mlmodel = ct.convert(
         traced_model,
@@ -53,7 +53,8 @@ try:
             ct.TensorType(name="embedding_bottom", shape=(1, 512))
         ],
         outputs=[ct.TensorType(name="compatibility_score")],
-        minimum_deployment_target=ct.target.iOS16
+        minimum_deployment_target=ct.target.iOS16,
+        compute_precision=ct.transform.Float16() # [핵심] 32비트 연산을 16비트로 압축하여 ANE 최적화
     )
     
     # 6. 저장
@@ -61,7 +62,7 @@ try:
         os.makedirs('coreml')
         
     mlmodel.save("coreml/FashionCompatibilityScorer.mlpackage")
-    print("✨ SUCCESS: FashionCompatibilityScorer.mlpackage created successfully!")
+    print(" SUCCESS: FashionCompatibilityScorer.mlpackage created with Float16 quantization!")
 except Exception as e:
     print(f"CONVERSION ERROR: {e}")
 
