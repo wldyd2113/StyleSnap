@@ -13,6 +13,7 @@ enum CameraIntent {
     case analyzePixelBuffer(CVPixelBuffer)
     case analyzeGalleryImage(UIImage)
     case resetToRealtime
+    case provideFeedback(style: String, isLiked: Bool) // [복구]
 }
 
 struct CameraState {
@@ -81,6 +82,9 @@ final class CameraViewModel: ObservableObject, CameraManagerDelegate {
                 state.capturedImage = nil
                 state.isRunning = true
                 cameraManager.startSession()
+            case .provideFeedback(let style, let isLiked):
+                coordinationService.recordFeedback(style: style, isLiked: isLiked)
+                await fetchRecommendations()
             }
         }
     }
