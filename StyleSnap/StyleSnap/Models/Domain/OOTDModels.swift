@@ -14,6 +14,7 @@ struct OOTDLog: Identifiable, Codable {
 struct ClothingItemSnapshot: Identifiable, Codable {
     let id: String
     let name: String
+    let style: String        // [추가] 스타일 통계용
     let imageData: Data?     // Wardrobe 아이템의 실제 이미지 데이터 저장
 }
 

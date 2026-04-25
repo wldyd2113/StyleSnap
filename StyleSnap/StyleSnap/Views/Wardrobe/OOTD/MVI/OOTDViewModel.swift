@@ -54,7 +54,12 @@ class OOTDViewModel: ObservableObject {
         // 옷장에서 스냅샷 생성 - 반환 타입을 명확히 하여 nil 에러 해결
         let snapshots: [ClothingItemSnapshot] = itemIds.compactMap { (id: String) -> ClothingItemSnapshot? in
             guard let item = state.wardrobeItems.first(where: { $0.id == id }) else { return nil }
-            return ClothingItemSnapshot(id: item.id, name: item.name, imageData: item.imageData)
+            return ClothingItemSnapshot(
+                id: item.id, 
+                name: item.name, 
+                style: item.style, // [복구] 스타일 정보 전달
+                imageData: item.imageData
+            )
         }
         
         let newLog = OOTDLog(
