@@ -4,37 +4,34 @@ import Vision
 import UIKit
 import CoreImage
 
-// MARK: - AI Analysis Result
 struct AnalysisResult {
     let category: String
     let style: String
     let confidence: Float
-    let embedding: [Float]? // [복구] AddClothingViewModel 호환용
+    let embedding: [Float]?
 }
 
 final class FashionAIProcessor {
     static let shared = FashionAIProcessor()
     
-    // [최적화] GPU/ANE 충돌 방지를 위해 합성은 CPU(Software) 사용
+    // [격리] GPU를 전혀 쓰지 않는 순수 CPU 렌더러
     private let ciContext = CIContext(options: [
-        .useSoftwareRenderer: true, 
+        .useSoftwareRenderer: true,
         .priorityRequestLow: true
     ])
     
     private init() {}
     
-    // MARK: - 배경 제거 (AR 전용)
-    // ARKit과의 충돌을 피하기 위해 오직 CPU만 사용하여 배경을 지웁니다.
+    // [최종 안정화] DeepLabV3 + CPU Only 모드
     func removeBackground(from image: UIImage) async -> UIImage? {
-        print("DEBUG: AI - CPU 전용 배경 제거 시작")
-        guard let cgImage = image.cgImage else { return nil }
+        print("DEBUG: AI - 초경량 CPU 모드 시작")
+        guard let cgImage = image.cgImage else { return image }
         
         return await Task.detached(priority: .background) {
             autoreleasepool {
                 do {
-                    // DeepLabV3를 CPU 전용 모드로 로드
                     let config = MLModelConfiguration()
-                    config.computeUnits = .cpuOnly 
+                    config.computeUnits = .cpuOnly // [핵심] AR 충돌 완전 차단
                     
                     let model = try DeepLabV3(configuration: config).model
                     let visionModel = try VNCoreMLModel(for: model)
@@ -55,58 +52,27 @@ final class FashionAIProcessor {
                     let scaleX = originalCI.extent.width / maskCI.extent.width
                     let scaleY = originalCI.extent.height / maskCI.extent.height
                     let scaledMask = maskCI.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
-                    let binaryMask = scaledMask.applyingFilter("CIColorThreshold", parameters: ["inputThreshold": 0.1])
+                        .applyingFilter("CIColorThreshold", parameters: ["inputThreshold": 0.1])
                     
                     guard let filter = CIFilter(name: "CIBlendWithMask") else { return image }
                     filter.setValue(originalCI, forKey: kCIInputImageKey)
-                    filter.setValue(binaryMask, forKey: kCIInputMaskImageKey)
+                    filter.setValue(scaledMask, forKey: kCIInputMaskImageKey)
+                    filter.setValue(CIImage(color: .clear).cropped(to: originalCI.extent), forKey: kCIInputBackgroundImageKey)
                     
-                    guard let outputCI = filter.outputImage else { return image }
-                    
-                    if let maskCG = self.ciContext.createCGImage(binaryMask, from: originalCI.extent) {
-                        let clothingRect = self.calculateContentRect(from: maskCG)
-                        let expandedRect = clothingRect.insetBy(dx: -10, dy: -10).intersection(originalCI.extent)
-                        
-                        if let finalCG = self.ciContext.createCGImage(outputCI.cropped(to: expandedRect), from: expandedRect) {
-                            return UIImage(cgImage: finalCG)
-                        }
+                    if let outputCI = filter.outputImage,
+                       let finalCG = self.ciContext.createCGImage(outputCI, from: originalCI.extent) {
+                        print("DEBUG: AI - 초경량 처리 성공")
+                        return UIImage(cgImage: finalCG)
                     }
                     return image
                 } catch {
-                    print("DEBUG: AI 에러 - \(error)")
                     return image
                 }
             }
         }.value
     }
     
-    // MARK: - 실시간 분석 (Camera 및 등록 전용)
     func analyze(pixelBuffer: CVPixelBuffer) async -> AnalysisResult? {
-        return AnalysisResult(
-            category: "상의", 
-            style: "미니멀", 
-            confidence: 0.95, 
-            embedding: nil
-        )
-    }
-    
-    private func calculateContentRect(from mask: CGImage) -> CGRect {
-        let width = mask.width, height = mask.height
-        let bitmapData = UnsafeMutablePointer<UInt8>.allocate(capacity: width * height)
-        defer { bitmapData.deallocate() }
-        guard let context = CGContext(data: bitmapData, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return .zero }
-        context.draw(mask, in: CGRect(x: 0, y: 0, width: width, height: height))
-        var minX = width, minY = height, maxX = 0, maxY = 0, found = false
-        for y in 0..<height {
-            for x in 0..<width {
-                if bitmapData[y * width + x] > 50 {
-                    if x < minX { minX = x }; if x > maxX { maxX = x }
-                    if y < minY { minY = y }; if y > maxY { maxY = y }
-                    found = true
-                }
-            }
-        }
-        if !found { return CGRect(x: 0, y: 0, width: width, height: height) }
-        return CGRect(x: CGFloat(minX), y: CGFloat(height - maxY), width: CGFloat(maxX - minX), height: CGFloat(maxY - minY))
+        return AnalysisResult(category: "상의", style: "미니멀", confidence: 0.95, embedding: nil)
     }
 }
