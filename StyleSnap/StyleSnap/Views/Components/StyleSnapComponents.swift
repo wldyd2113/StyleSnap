@@ -101,21 +101,13 @@ struct PrimaryButton: View {
 
 struct SectionHeader: View {
     let title: String
-    var showMore: Bool = true
-    
+
     var body: some View {
         HStack {
             Text(title)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.fashionBlack)
             Spacer()
-            if showMore {
-                Button(action: { print("DEBUG: Show more tapped for \(title)") }) {
-                    Text("See All")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondaryGray)
-                }
-            }
         }
         .padding(.horizontal)
     }
