@@ -13,7 +13,7 @@ enum CameraIntent {
     case analyzePixelBuffer(CVPixelBuffer)
     case analyzeGalleryImage(UIImage)
     case resetToRealtime
-    case provideFeedback(style: String, isLiked: Bool) // [복구]
+    case provideFeedback(style: String, isLiked: Bool)
 }
 
 struct CameraState {
@@ -23,9 +23,9 @@ struct CameraState {
     var currentStyle: String = "스타일 분석 중..."
     var dominantColor: Color = .fashionGray
     var confidence: Float = 0.0
-    var recommendations: [RecommendedItem] = []
+    var recommendations: [ColorRecommendation] = []
     var isRecommendationLoading: Bool = false
-    var capturedImage: UIImage? = nil // [추가] 촬영된 이미지 저장
+    var capturedImage: UIImage? = nil 
 }
 
 // MARK: - ViewModel
@@ -33,16 +33,21 @@ struct CameraState {
 final class CameraViewModel: ObservableObject, CameraManagerDelegate {
     @Published private(set) var state = CameraState()
     
-    let cameraManager = CameraManager()
-    private let aiProcessor = FashionAIProcessor.shared
+    // [자원 격리] 하드웨어 충돌 방지를 위해 지연 로딩 적용
+    lazy var cameraManager: CameraManager = {
+        let manager = CameraManager()
+        manager.delegate = self
+        return manager
+    }()
+    
     private let colorExtractor = ColorExtractor.shared
     private let coordinationService = CoordinationService.shared
     
     private var isAnalyzing = false
-    private var lastBuffer: CVPixelBuffer? // [추가] 최신 프레임 임시 저장
+    private var lastBuffer: CVPixelBuffer? 
     
     init() {
-        cameraManager.delegate = self
+        // init에서는 아무것도 하지 않음 (lazy 로딩 대기)
     }
     
     func send(intent: CameraIntent) {
@@ -59,7 +64,6 @@ final class CameraViewModel: ObservableObject, CameraManagerDelegate {
                 state.isRunning = false
                 cameraManager.stopSession()
             case .capturePhoto:
-                // 최신 버퍼를 이미지로 변환하여 저장
                 if let buffer = lastBuffer {
                     state.capturedImage = UIImage.from(pixelBuffer: buffer)
                 }
@@ -67,10 +71,10 @@ final class CameraViewModel: ObservableObject, CameraManagerDelegate {
                 state.isShowingResult = true
                 await fetchRecommendations()
             case .analyzePixelBuffer(let buffer):
-                self.lastBuffer = buffer // 최신 버퍼 갱신
+                self.lastBuffer = buffer 
                 await handleAnalysis(buffer: buffer)
             case .analyzeGalleryImage(let image):
-                state.capturedImage = image // 갤러리 이미지 저장
+                state.capturedImage = image 
                 state.isRunning = false
                 state.isShowingResult = true
                 if let buffer = image.toPixelBuffer() {
@@ -101,7 +105,9 @@ final class CameraViewModel: ObservableObject, CameraManagerDelegate {
         if let extractedColor = await colorExtractor.extractDominantColor(from: buffer) {
             self.state.dominantColor = Color(uiColor: extractedColor)
         }
-        if let result = await aiProcessor.analyze(pixelBuffer: buffer) {
+        
+        // [자원 격리] AI 엔진을 호출 시점에만 접근하여 초기 구동 부하 감소
+        if let result = await FashionAIProcessor.shared.analyze(pixelBuffer: buffer) {
             self.state.currentCategory = result.category
             self.state.currentStyle = result.style
             self.state.confidence = result.confidence
@@ -111,10 +117,10 @@ final class CameraViewModel: ObservableObject, CameraManagerDelegate {
     
     private func fetchRecommendations() async {
         state.isRecommendationLoading = true
-        state.recommendations = await coordinationService.recommend(
-            category: state.currentCategory,
-            style: state.currentStyle,
-            color: state.dominantColor
+        // [색상 추천 전환]CoordinationService의 바뀐 메서드 호출
+        state.recommendations = await coordinationService.recommendHarmoniousColors(
+            for: state.dominantColor,
+            style: state.currentStyle
         )
         state.isRecommendationLoading = false
     }

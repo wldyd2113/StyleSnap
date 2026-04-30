@@ -16,7 +16,7 @@ struct CameraAnalysisView: View {
             VStack {
                 if !viewModel.state.isShowingResult {
                     HStack {
-                        Text("실시간 스타일 분석 중...")
+                        Text("실시간 컬러 및 스타일 분석 중...")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 16).padding(.vertical, 8)
@@ -43,16 +43,16 @@ struct CameraAnalysisView: View {
                     if viewModel.state.isShowingResult {
                         Divider()
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("AI 추천 코디 아이템") // [수정] 컬러 조합 -> 코디 아이템으로 명칭 변경
+                            Text("AI 추천 컬러 (5가지)")
                                 .font(.system(size: 16, weight: .bold))
                             
                             if viewModel.state.isRecommendationLoading {
                                 HStack { Spacer(); ProgressView(); Spacer() }.padding()
                             } else {
                                 ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 16) {
-                                        ForEach(viewModel.state.recommendations) { item in
-                                            SimpleRecommendationCard(item: item)
+                                    HStack(spacing: 12) {
+                                        ForEach(viewModel.state.recommendations) { recommendation in
+                                            IndividualColorCard(recommendation: recommendation)
                                         }
                                     }
                                 }
@@ -81,38 +81,42 @@ struct CameraAnalysisView: View {
                 }.padding(.bottom, 50).padding(.top, 20)
             }
         }
-        .onAppear { viewModel.send(intent: .checkPermissions); viewModel.send(intent: .startAnalysis) }
-        .onChange(of: selectedPhotoItem) { newItem in
-            Task { if let data = try? await newItem?.loadTransferable(type: Data.self), let image = UIImage(data: data) { viewModel.send(intent: .analyzeGalleryImage(image)) } }
+        .onAppear { 
+            viewModel.send(intent: .checkPermissions)
+            viewModel.send(intent: .startAnalysis) 
         }
-    }
-}
-
-struct SimpleRecommendationCard: View {
-    let item: RecommendedItem
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // [수정] 컬러 사각형 대신 실제 추천 옷 이미지 표시
-            AsyncImage(url: URL(string: item.imageURL)) { image in
-                image.resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle().fill(Color.fashionGray)
-                    .overlay(ProgressView().scaleEffect(0.5))
+        .onChange(of: selectedPhotoItem) { oldValue, newValue in
+            if let item = newValue {
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        viewModel.send(intent: .analyzeGalleryImage(image))
+                    }
+                }
             }
-            .frame(width: 120, height: 140)
-            .clipShape(RoundedRectangle(cornerRadius: 15))
-            .shadow(color: .black.opacity(0.05), radius: 5)
-            
-            Text(item.name)
-                .font(.system(size: 11, weight: .bold))
-                .lineLimit(1)
-                .frame(width: 120, alignment: .leading)
         }
     }
 }
 
-// ... 나머지 헬퍼 컴포넌트들 ...
+// [개편] 개별 컬러를 강조하는 심플한 카드 UI
+struct IndividualColorCard: View {
+    let recommendation: ColorRecommendation
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            RoundedRectangle(cornerRadius: 15)
+                .fill(recommendation.color)
+                .frame(width: 80, height: 80)
+                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+            
+            Text(recommendation.name)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.primary)
+        }
+    }
+}
+
+// MARK: - Helper Components
 struct AnalysisChip: View {
     let label: String
     let value: String
@@ -123,15 +127,17 @@ struct AnalysisChip: View {
         }
     }
 }
+
 struct ColorPreviewChip: View {
     let color: Color
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("색상").font(.system(size: 10, weight: .bold)).foregroundColor(.gray)
+            Text("추출 색상").font(.system(size: 10, weight: .bold)).foregroundColor(.gray)
             Circle().fill(color).frame(width: 14, height: 14).overlay(Circle().stroke(Color.gray.opacity(0.5), lineWidth: 1))
         }
     }
 }
+
 struct CameraPreviewLayerComponent: UIViewRepresentable {
     let session: AVCaptureSession
     func makeUIView(context: Context) -> PreviewView {
