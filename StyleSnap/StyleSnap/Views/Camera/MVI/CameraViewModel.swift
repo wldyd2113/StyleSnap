@@ -4,7 +4,6 @@ import Combine
 import SwiftUI
 import AVFoundation
 
-// MARK: - MVI Components
 enum CameraIntent {
     case checkPermissions
     case startAnalysis
